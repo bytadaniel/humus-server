@@ -1,12 +1,9 @@
-// auth.controller.ts
-
 import {
   Body,
   Controller,
   Get,
   Post,
   Request,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -43,11 +40,10 @@ export class AuthController {
   }
 
   @Post('refresh-token')
-  async refreshToken(@Body() payload: {
-    userId: number,
-    refreshToken: string
-  }) {
-    return this.authService.refreshToken(payload.userId, payload.refreshToken)
+  async refreshToken(
+    @Body() payload: { userId: number; refreshToken: string },
+  ) {
+    return this.authService.refreshToken(payload.userId, payload.refreshToken);
   }
 
   @UseGuards(AuthGuard('jwt'))

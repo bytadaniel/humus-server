@@ -1,13 +1,11 @@
-import * as crypto from 'crypto'
+import * as crypto from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService as Jwt } from '@nestjs/jwt';
 import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class JwtService {
-  constructor (
-    private readonly jwt: Jwt,
-  ) {}
+  constructor(private readonly jwt: Jwt) {}
 
   public generateAccessToken(user: User): string {
     const payload = {
@@ -19,7 +17,7 @@ export class JwtService {
     return this.jwt.sign(payload);
   }
 
-  public generateRefreshToken(length: number = 32): string {
+  public generateRefreshToken(length = 32): string {
     return crypto.randomBytes(length).toString('hex');
   }
 }

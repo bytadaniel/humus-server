@@ -20,7 +20,13 @@ import { Session } from 'src/entities/session.entity';
       signOptions: { expiresIn: '1h' }, // Token expiration time
     }),
   ],
-  providers: [AuthService, UserService, JwtStrategy, JwtService, SessionService],
+  providers: [
+    AuthService,
+    UserService,
+    JwtStrategy,
+    JwtService,
+    SessionService,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

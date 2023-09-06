@@ -52,7 +52,7 @@ export class User extends BaseEntityWithIdAndTimestamps {
 
   @Column('jsonb', { default: {} })
   public data: UserData;
-  
+
   @ManyToOne(() => Session, (session) => session.user)
-  public sessions: Session[]
+  public sessions: Session[];
 }

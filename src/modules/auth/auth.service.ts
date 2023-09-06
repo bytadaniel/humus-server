@@ -1,5 +1,3 @@
-// auth.service.ts
-
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
@@ -15,18 +13,23 @@ export class AuthService {
     private readonly sessionService: SessionService,
     private readonly jwtService: JwtService,
   ) {}
-    
-  public async findSessionByRefreshToken(refreshToken: string): Promise<Session | null> {
+
+  public async findSessionByRefreshToken(
+    refreshToken: string,
+  ): Promise<Session | null> {
     return this.sessionService.findByRefreshToken(refreshToken);
   }
-    
-  public async validateUser(phone: string, password: string): Promise<User | null> {
+
+  public async validateUser(
+    phone: string,
+    password: string,
+  ): Promise<User | null> {
     const user = await this.userService.findByPhoneNumber(phone);
-    
+
     if (user && (await this.comparePasswords(password, user.password))) {
       return user;
     }
-    
+
     return null;
   }
 
@@ -46,23 +49,26 @@ export class AuthService {
       hashedPassword,
     );
   }
-      
+
   public async loginByPhone(
     phone: string,
     password: string,
-  ): Promise<{ accessToken: string, refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.validateUser(phone, password);
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    
+
     const accessToken = this.jwtService.generateAccessToken(user);
-    const session = await this.sessionService.create(user, this.jwtService.generateRefreshToken());
-    
+    const session = await this.sessionService.create(
+      user,
+      this.jwtService.generateRefreshToken(),
+    );
+
     return { accessToken, refreshToken: session.refreshToken };
   }
-        
+
   public async refreshToken(userId: number, refreshToken: string) {
     const session = await this.sessionService.findByRefreshToken(refreshToken);
 
