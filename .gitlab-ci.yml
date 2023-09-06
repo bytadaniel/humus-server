@@ -1,0 +1,36 @@
+
+.workflow:
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9].[0-9].[0-9]$/
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == "dev"
+      when: on_success
+
+
+stages:
+  - step_build
+  - deploy
+
+step_build:
+  stage: step_build
+  extends: .workflow
+  tags: [humus , shell]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t "${CI_REGISTRY_IMAGE}:${CI_PROJECT_NAME}-${CI_COMMIT_SHORT_SHA}"  .
+    - docker push "${CI_REGISTRY_IMAGE}:${CI_PROJECT_NAME}-${CI_COMMIT_SHORT_SHA}"
+
+deploy: 
+  stage: deploy
+  extends: .workflow
+  tags: [humus , shell]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      docker_env_file=$(mktemp)
+      env | sed -n "s/^DOC_ENV_\(.*\)$/\1/p" > $docker_env_file
+    - docker rm --force ${CI_PROJECT_NAME}
+    - docker run --name ${CI_PROJECT_NAME} --env-file $docker_env_file -d --restart=always --link postgres13.3:db -p 8080:3000 "${CI_REGISTRY_IMAGE}:${CI_PROJECT_NAME}-${CI_COMMIT_SHORT_SHA}"
+
