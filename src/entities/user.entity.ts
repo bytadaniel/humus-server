@@ -1,5 +1,6 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { BaseEntityWithIdAndTimestamps } from './facades/base-entity-with-id-and-timestamps';
+import { Session } from './session.entity';
 
 export enum UserRole {
   /**
@@ -51,4 +52,7 @@ export class User extends BaseEntityWithIdAndTimestamps {
 
   @Column('jsonb', { default: {} })
   public data: UserData;
+  
+  @ManyToOne(() => Session, (session) => session.user)
+  public sessions: Session[]
 }

@@ -1,29 +1,36 @@
 // auth.service.ts
 
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
 import { User } from 'src/entities/user.entity';
+import { Session } from 'src/entities/session.entity';
+import { SessionService } from './session/session.service';
+import { JwtService } from './jwt/jwt.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
     private readonly jwtService: JwtService,
   ) {}
-
-  async validateUser(username: string, password: string): Promise<User | null> {
-    const user = await this.userService.findByUsername(username);
-
+    
+  public async findSessionByRefreshToken(refreshToken: string): Promise<Session | null> {
+    return this.sessionService.findByRefreshToken(refreshToken);
+  }
+    
+  public async validateUser(phone: string, password: string): Promise<User | null> {
+    const user = await this.userService.findByPhoneNumber(phone);
+    
     if (user && (await this.comparePasswords(password, user.password))) {
       return user;
     }
-
+    
     return null;
   }
 
-  async register(
+  public async register(
     username: string,
     name: string,
     phone: string,
@@ -39,21 +46,35 @@ export class AuthService {
       hashedPassword,
     );
   }
-
-  async loginByPhone(
+      
+  public async loginByPhone(
     phone: string,
     password: string,
-  ): Promise<{ accessToken: string }> {
-    const user = await this.userService.findByPhoneNumber(phone);
+  ): Promise<{ accessToken: string, refreshToken: string }> {
+    const user = await this.validateUser(phone, password);
+    
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    
+    const accessToken = this.jwtService.generateAccessToken(user);
+    const session = await this.sessionService.create(user, this.jwtService.generateRefreshToken(22));
+    
+    return { accessToken, refreshToken: session.refreshToken };
+  }
+        
+  public async refreshToken(userId: number, refreshToken: string) {
+    const session = await this.sessionService.findByRefreshToken(refreshToken);
 
-    if (!user || !(await this.comparePasswords(password, user.password))) {
-      throw new UnauthorizedException('Invalid phone number or password');
+    if (!session || session.userId !== userId) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const payload = { username: user.username, sub: user.id };
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
+    // Generate a new access token
+    const user = await this.userService.findById(userId);
+    const accessToken = this.jwtService.generateAccessToken(user);
+
+    return { accessToken };
   }
 
   private async hashPassword(password: string): Promise<string> {

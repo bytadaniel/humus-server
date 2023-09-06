@@ -6,6 +6,7 @@ import {
   Get,
   Post,
   Request,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -39,6 +40,14 @@ export class AuthController {
   @Post('login')
   async login(@Body() payload: { phone: string; password: string }) {
     return this.authService.loginByPhone(payload.phone, payload.password);
+  }
+
+  @Post('refresh-token')
+  async refreshToken(@Body() payload: {
+    userId: number,
+    refreshToken: string
+  }) {
+    return this.authService.refreshToken(payload.userId, payload.refreshToken)
   }
 
   @UseGuards(AuthGuard('jwt'))
