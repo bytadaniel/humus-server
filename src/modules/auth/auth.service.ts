@@ -58,7 +58,7 @@ export class AuthService {
     }
     
     const accessToken = this.jwtService.generateAccessToken(user);
-    const session = await this.sessionService.create(user, this.jwtService.generateRefreshToken(22));
+    const session = await this.sessionService.create(user, this.jwtService.generateRefreshToken());
     
     return { accessToken, refreshToken: session.refreshToken };
   }
